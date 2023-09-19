@@ -1,2 +1,48 @@
 ---
 # tasks file for debops-duply
+
+# Before even getting here the duply setup playbook needs to
+# - check GPG keys have been provided for encryption and signing
+# - set up backup target (if possible); openstack and vultr should be doable; private when possible
+
+# TODO: determine how i check GPG keys have been provided for encryption and signing
+
+# https://stackoverflow.com/a/43249037 to include tasks
+
+- name: Install Duply and dependencies
+  include_role:
+    name: debops.debops.apt_install
+  vars:
+    apt_install__dependent_packages: "{{ duply__apt_install__dependent_packages }}"
+
+# TODO: see comment in inventory; may need a task here to process configuration
+# eg, to combine duply__profile_base with each profile provided in duply__backup_combined_profiles
+
+- name: configure duply
+  include_role:
+      name: oefenweb.duply_backup
+      tasks_from: configuration
+  vars:
+    duply_backup_profiles: "{{ duply__backup_combined_profiles }}"
+
+- name: import gpg configuration to duply
+  import_role:
+      name: oefenweb.duply_backup
+      tasks_from: gpg
+  # when: some condition
+  vars:
+    duply_backup_gpg_pub_keys: "{{ duply__gpg_combined_pubkeys_import }}"
+    duply_backup_gpg_ownertrusts: "{{ duply__gpg_combined_ownertrusts_import }}"
+    duply_backup_gpg_sec_keys: "{{ duply__gpg_combined_privkeys_import }}"
+
+- name: Configure Cron
+  tags: [ 'role::cron', 'skip::cron' ]
+  import_role:
+    name: debops.debops.cron
+  vars:
+    # Remember duply__cron__dependent_jobs has to be a dict
+    cron__dependent_jobs: "{{ duply__cron__dependent_jobs }}"
+
+# TODO: support for opening firewall to target hosts
+# - role: ferm
+

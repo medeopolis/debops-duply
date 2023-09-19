@@ -1,2 +1,338 @@
 ---
 # defaults file for debops-duply
+
+
+# Package installs [[[
+# -------------------------
+
+# .. envvar:: duply__apt_base_packages [[[
+#
+# List of APT packages to install for :program:`duply` support.
+duply__apt_base_packages: [ 'duply', 'duplicity' ]
+
+                                                                   # ]]]
+# .. envvar:: duply__apt_packages [[[
+#
+# List of additional APT packages to install with :program:`duply` on every
+# host
+duply__apt_packages: []
+                                                                   # ]]]
+
+
+# .. envvar:: duply__apt_group_packages and duply__apt_host_packages [[[
+#
+# List of additional APT packages to install with :program:`duply` per group
+# and host. These will need to be configured in line with the requested backup
+# backends in duply__backup_default_profiles.
+duply__apt_group_packages: []
+duply__apt_host_packages: []
+
+
+# .. envvar:: duply__apt_combined_packages [[[
+#
+# Variable which combines all other apt package lists
+duply__apt_install__dependent_packages: '{{ duply__apt_base_packages +
+                                             duply__apt_packages   +
+                                             duply__apt_group_packages +
+                                             duply__apt_host_packages }}'
+
+                                                                   # ]]]
+
+
+# .. envvar:: Duply profile configuration [[[
+
+# Keys which can be used for encrypting. has implications for GPG options but
+# multiple keys are not tested by me.
+duply__profile_conf_gpg_encrypting_keys: []
+duply__profile_conf_base_gpg_encrypting_keys: []
+duply__profile_conf_group_gpg_encrypting_keys: []
+duply__profile_conf_host_gpg_encrypting_keys: []
+duply__profile_conf_combined_gpg_encrypting_keys: "{{ ( duply__profile_conf_gpg_encrypting_keys +
+                                                duply__profile_conf_base_gpg_encrypting_keys +
+                                                duply__profile_conf_group_gpg_encrypting_keys +
+                                                duply__profile_conf_host_gpg_encrypting_keys ) |join(' ') }}"
+
+# Exports in to the environment ; can be used for various reasons but the main
+# one is configuring transports (targets)
+duply__profile_conf_environment_exports: []
+duply__profile_conf_base_environment_exports: []
+duply__profile_conf_group_environment_exports: []
+duply__profile_conf_host_environment_exports: []
+duply__profile_conf_combined_environment_exports: "{{ duply__profile_conf_environment_exports +
+                                                duply__profile_conf_base_environment_exports +
+                                                duply__profile_conf_group_environment_exports +
+                                                duply__profile_conf_host_environment_exports }}"
+
+# Files to exclude from all backups
+duply__profile_excludes: []
+duply__profile_excludes_base: []
+duply__profile_excludes_group: []
+duply__profile_excludes_host: []
+duply__profile_excludes_combined: "{{ duply__profile_excludes +
+                                    duply__profile_excludes_base +
+                                    duply__profile_excludes_group +
+                                    duply__profile_excludes_host }}"
+
+
+duply__profile_conf_duply_parameters: []
+duply__profile_conf_base_duply_parameters: []
+# TODO: implement magic to check protocol and automatically add params; likely to happen in tasks
+duply__profile_conf_protocol_duply_parameters: []
+duply__profile_conf_group_duply_parameters: []
+duply__profile_conf_host_duply_parameters: []
+duply__profile_conf_combined_duply_parameters: "{{ ( duply__profile_conf_duply_parameters +
+                                            duply__profile_conf_base_duply_parameters +
+                                            duply__profile_conf_protocol_duply_parameters +
+                                            duply__profile_conf_group_duply_parameters +
+                                            duply__profile_conf_host_duply_parameters ) |join(' ')}}"
+
+# These ones just need to be overriden once, and have sensible defauls
+duply__profile_conf_gpg_key: 'disabled'
+duply__profile_conf_gpg_key_password: ''
+
+duply__profile_conf_gpg_signing_key: omit()
+duply__profile_conf_gpg_options: '--pinentry-mode loopback'
+
+duply__profile_conf_backup_target: ''
+
+duply__profile_conf_backup_source: '/'
+
+duply__profile_conf_max_full_backups: 2
+duply__profile_conf_max_full_backup_age: '1W'
+duply__profile_conf_max_fulls_with_incrementals: 1
+
+duply__profile_conf_backup_volume_size: 200
+
+duply__profile_conf_archive_directory: ''
+
+
+# Base profile
+# Built from variables (to allow greater customisation) the base profile is
+# merged with user supplied data to create the N+1 profiles available on a
+# given system.
+
+# Following the joins, these are all strings
+duply__profile_base:
+    conf:
+      gpg_keys_enc: "{{ duply__profile_conf_combined_gpg_encrypting_keys }}"
+      gpg_key_sign: "{{ duply__profile_conf_gpg_signing_key }}"
+      gpg_pw:   "{{ duply__profile_conf_gpg_key_password }}"
+      gpg_opts: "{{ duply__profile_conf_gpg_options }}"
+      target:   "{{ duply__profile_conf_backup_target }}"
+      export:   "{{ duply__profile_conf_combined_environment_exports }}"
+      source:   "{{ duply__profile_conf_backup_source }}"
+      max_full_backups:     "{{ duply__profile_conf_max_full_backups }}"
+      max_fullbkp_age:      "{{ duply__profile_conf_max_full_backup_age }}"
+      max_fulls_with_incrs: "{{ duply__profile_conf_max_fulls_with_incrementals }}"
+      volsize:     "{{ duply__profile_conf_backup_volume_size }}"
+      arch_dir:    "{{ duply__profile_conf_archive_directory }}"
+      dupl_params: "{{ duply__profile_conf_combined_duply_parameters }}"
+    excludes:      "{{ duply__profile_excludes_combined }}"
+
+
+
+# Backup configuration [[[
+# -------------------------
+
+
+# .. envvar:: duply__backup_default_profiles [[[
+#
+# YAML dictionary which defines default set of backup profiles. Empty by
+# default.
+duply__backup_default_profiles: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__backup_profiles [[[
+#
+# YAML dictionary with backup profiles , defined for all hosts in the Ansible
+# inventory.
+duply__backup_profiles: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__backup_group_profiles [[[
+#
+# YAML dictionary with backup profiles defined for hosts in a specific Ansible
+# inventory group.
+duply__backup_group_profiles: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__backup_host_profiles [[[
+#
+# YAML dictionary with backup profiles, defined for specific hosts in the
+# Ansible inventory.
+duply__backup_host_profiles: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__backup_combined_profiles [[[
+#
+# Variable which combines all other backup profile variables and
+# is used in the template.
+duply__backup_combined_profiles: '{{ duply__backup_default_profiles
+                                        | combine(duply__backup_profiles,
+                                                  duply__backup_group_profiles,
+                                                  duply__backup_host_profiles,
+                                                  recursive=true, list_merge="append_rp") }}'
+
+                                                                   # ]]]
+
+
+# .. envvar:: duply__gpg_default_pubkeys_import [[[
+#
+# YAML dictionary which defines default set of gpg pubkeys to import. Empty by
+# default.
+duply__gpg_default_pubkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_pubkeys_import [[[
+#
+# YAML dictionary with gpg pubkeys to import , defined for all hosts in the Ansible
+# inventory.
+duply__gpg_pubkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_group_pubkeys_import [[[
+#
+# YAML dictionary with gpg pubkeys to import defined for hosts in a specific Ansible
+# inventory group.
+duply__gpg_group_pubkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_host_pubkeys_import [[[
+#
+# YAML dictionary with gpg pubkeys to import, defined for specific hosts in the
+# Ansible inventory.
+duply__gpg_host_pubkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_combined_pubkeys_import [[[
+#
+# Variable which combines all other pubkeys to import variables
+duply__gpg_combined_pubkeys_import: '{{ duply__gpg_default_pubkeys_import +
+                                          duply__gpg_pubkeys_import       +
+                                          duply__gpg_group_pubkeys_import +
+                                          duply__gpg_host_pubkeys_import }}'
+
+                                                                   # ]]]
+
+
+# .. envvar:: duply__gpg_default_ownertrusts_import [[[
+#
+# YAML dictionary which defines default set of gpg ownertrusts to import. Empty by
+# default.
+duply__gpg_default_ownertrusts_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_ownertrusts_import [[[
+#
+# YAML dictionary with gpg ownertrusts to import , defined for all hosts in the Ansible
+# inventory.
+duply__gpg_ownertrusts_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_group_ownertrusts_import [[[
+#
+# YAML dictionary with gpg ownertrusts to import defined for hosts in a specific Ansible
+# inventory group.
+duply__gpg_group_ownertrusts_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_host_ownertrusts_import [[[
+#
+# YAML dictionary with gpg ownertrusts to import, defined for specific hosts in the
+# Ansible inventory.
+duply__gpg_host_ownertrusts_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_combined_ownertrusts_import [[[
+#
+# Variable which combines all other ownertrusts to import variables
+duply__gpg_combined_ownertrusts_import: '{{ duply__gpg_default_ownertrusts_import
+                                        | combine(duply__gpg_ownertrusts_import,
+                                                  duply__gpg_group_ownertrusts_import,
+                                                  duply__gpg_host_ownertrusts_import) }}'
+
+                                                                   # ]]]
+
+
+# .. envvar:: duply__gpg_default_privkeys_import [[[
+#
+# YAML dictionary which defines default set of gpg privkeys to import. Empty by
+# default.
+duply__gpg_default_privkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_privkeys_import [[[
+#
+# YAML dictionary with gpg privkeys to import , defined for all hosts in the Ansible
+# inventory.
+duply__gpg_privkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_group_privkeys_import [[[
+#
+# YAML dictionary with gpg privkeys to import defined for hosts in a specific Ansible
+# inventory group.
+duply__gpg_group_privkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_host_privkeys_import [[[
+#
+# YAML dictionary with gpg privkeys to import, defined for specific hosts in the
+# Ansible inventory.
+duply__gpg_host_privkeys_import: []
+
+                                                                   # ]]]
+# .. envvar:: duply__gpg_combined_privkeys_import [[[
+#
+# Variable which combines all other privkeys to import variables
+duply__gpg_combined_privkeys_import: '{{ duply__gpg_default_privkeys_import +
+                                           duply__gpg_privkeys_import       +
+                                           duply__gpg_group_privkeys_import +
+                                           duply__gpg_host_privkeys_import }}'
+
+                                                                   # ]]]
+                                                                   # ]]]
+
+
+# Cron configuration [[[
+# ----------------------
+
+# .. envvar:: duply__cron_default_jobs [[[
+#
+# YAML dictionary which defines default set of cron jobs to import. Empty by
+# default.
+duply__cron_default_jobs: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__cron_jobs [[[
+#
+# YAML dictionary with cron jobs to import , defined for all hosts in the Ansible
+# inventory.
+duply__cron_jobs: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__cron_group_jobs [[[
+#
+# YAML dictionary with cron jobs to import defined for hosts in a specific Ansible
+# inventory group.
+duply__cron_group_jobs: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__cron_host_jobs [[[
+#
+# YAML dictionary with cron jobs to import, defined for specific hosts in the
+# Ansible inventory.
+duply__cron_host_jobs: {}
+
+                                                                   # ]]]
+# .. envvar:: duply__cron__dependent_jobs[[[
+#
+# Variable which combines all other jobs to import variables
+duply__cron__dependent_jobs: '{{ duply__cron_default_jobs |combine(
+                                  duply__cron_jobs,
+                                  duply__cron_group_jobs,
+                                  duply__cron_host_jobs) }}'
+
+                                                                   # ]]]
+                                                                   # ]]]
+
