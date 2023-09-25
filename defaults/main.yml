@@ -74,6 +74,7 @@ duply__profile_excludes_combined: "{{ duply__profile_excludes +
                                     duply__profile_excludes_host }}"
 
 
+# Extra parameters to provide the Duplicity command via Duply
 duply__profile_conf_duply_parameters: []
 duply__profile_conf_base_duply_parameters: []
 # TODO: implement magic to check protocol and automatically add params; likely to happen in tasks
