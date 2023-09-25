@@ -15,6 +15,11 @@
   vars:
     apt_install__dependent_packages: "{{ duply__apt_install__dependent_packages }}"
 
+- name: Ensure Duply temporary directory exists
+  file:
+    path: "{{ duply__profile_conf_temporary_directory }}"
+    state: directory
+
 # TODO: see comment in inventory; may need a task here to process configuration
 # eg, to combine duply__profile_base with each profile provided in duply__backup_combined_profiles
 
