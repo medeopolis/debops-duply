@@ -103,7 +103,9 @@ duply__profile_conf_max_fulls_with_incrementals: 1
 
 duply__profile_conf_backup_volume_size: 200
 
-duply__profile_conf_archive_directory: ''
+duply__profile_conf_archive_directory: '~/.cache/duplicity/duply'
+
+duply__profile_conf_temporary_directory: '/tmp'
 
 
 # Base profile
@@ -126,6 +128,7 @@ duply__profile_base:
       max_fulls_with_incrs: "{{ duply__profile_conf_max_fulls_with_incrementals }}"
       volsize:     "{{ duply__profile_conf_backup_volume_size }}"
       arch_dir:    "{{ duply__profile_conf_archive_directory }}"
+      temp_dir:    "{{ duply__profile_conf_temporary_directory }}"
       dupl_params: "{{ duply__profile_conf_combined_duply_parameters }}"
     excludes:      "{{ duply__profile_excludes_combined }}"
 
