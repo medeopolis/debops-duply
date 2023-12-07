@@ -76,7 +76,9 @@ duply__profile_excludes_combined: "{{ duply__profile_excludes +
 
 # Extra parameters to provide the Duplicity command via Duply
 duply__profile_conf_duply_parameters: []
-duply__profile_conf_base_duply_parameters: []
+# TODO: check if this works invoked via cron/systemd timers
+# TODO: check what happens if two backups write to the same log file
+duply__profile_conf_base_duply_parameters: ['--log-file /var/log/duply.${BASHPID}.log']
 # TODO: implement magic to check protocol and automatically add params; likely to happen in tasks
 duply__profile_conf_protocol_duply_parameters: []
 duply__profile_conf_group_duply_parameters: []
